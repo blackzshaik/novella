@@ -126,7 +126,7 @@ class StoryViewFragment : Fragment(),ProgressListener {
         playerView.show()
         imageView.hide()
 
-        val mediaSource:MutableList<MediaItem> = mutableListOf()
+
         val mediaItem = MediaItem.fromUri(listOfVideos[which].url)
 //        listOfVideos.forEach{
 //            if(it.url.checkMediaType() == MediaType.VIDEO){
@@ -185,12 +185,6 @@ class StoryViewFragment : Fragment(),ProgressListener {
         }
         thisFragment.findViewById<AppCompatButton>(R.id.playButton).setOnClickListener{
             novellaProgress.resume()
-        }
-        thisFragment.findViewById<AppCompatButton>(R.id.nextButton).setOnClickListener{
-            novellaProgress.next()
-        }
-        thisFragment.findViewById<AppCompatButton>(R.id.previousButton).setOnClickListener{
-            novellaProgress.previous()
         }
     }
 
