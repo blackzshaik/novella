@@ -11,7 +11,6 @@ import android.widget.ProgressBar
 import androidx.viewpager2.widget.ViewPager2
 import com.blackz.novella.R
 import com.blackz.novella.listeners.ProgressListener
-import com.blackz.novella.util.listOfVideos
 
 class NovellaProgress @JvmOverloads
 constructor (context: Context, attributeSet: AttributeSet? = null, defStyleAttr:Int =0 ) :
@@ -54,13 +53,13 @@ constructor (context: Context, attributeSet: AttributeSet? = null, defStyleAttr:
 
     fun pause(){
         currentAnimation.pause()
-        progressListener?.onPauseOrResume(false)
+        progressListener?.onPauseOrResume(false, currentlyPlayingAnimationFor)
     }
 
 
     fun resume(){
         currentAnimation.resume()
-        progressListener?.onPauseOrResume(true)
+        progressListener?.onPauseOrResume(true,currentlyPlayingAnimationFor )
     }
 
     fun next(){
@@ -75,6 +74,7 @@ constructor (context: Context, attributeSet: AttributeSet? = null, defStyleAttr:
 
     private fun startAnimation(index :Int = 0,from:String = "M"){
         Log.d(TAG,"index =========== $index from ===== $from")
+        if(index == 0) progressListener?.onProgressStarts()
 
         currentlyPlayingAnimationFor = index
         val rView = getChildAt(index) as ProgressBar
@@ -88,7 +88,7 @@ constructor (context: Context, attributeSet: AttributeSet? = null, defStyleAttr:
                     if(!isPrevious){
                         if(hasNext()){
                             startAnimation(index + 1,"A")
-                            progressListener?.onNext()
+                            progressListener?.onNext(index + 1)
                         }else{
                             Log.d(TAG,"Finished")
                             progressListener?.onEnd()
@@ -98,7 +98,7 @@ constructor (context: Context, attributeSet: AttributeSet? = null, defStyleAttr:
                         if(hasPrevious()){
                             (currentAnimation.target as ProgressBar).progress = 0
                             startAnimation(index - 1 )
-                            progressListener?.onPrevious()
+                            progressListener?.onPrevious(index -1)
                         }else{
                             startAnimation(0,"C")
                         }
