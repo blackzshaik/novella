@@ -29,8 +29,7 @@ fun String.checkMediaType(): MediaType {
             MediaType.VIDEO
         }
         else -> {
-            //todo; unhandled case
-            MediaType.UNKNOWN
+            MediaType.TEXT
         }
     }
 }

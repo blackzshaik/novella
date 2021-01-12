@@ -2,12 +2,15 @@ package com.blackz.novella.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.Fragment
 import com.blackz.novella.R
 import com.blackz.novella.customviews.NovellaProgress
@@ -15,7 +18,7 @@ import com.blackz.novella.listeners.ProgressListener
 import com.blackz.novella.model.MediaType
 import com.blackz.novella.util.checkMediaType
 import com.blackz.novella.util.hide
-import com.blackz.novella.util.listOfVideos
+import com.blackz.novella.util.listOfContents
 import com.blackz.novella.util.show
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -39,6 +42,7 @@ class StoryViewFragment : Fragment(),ProgressListener {
     private lateinit var storyPlayer:SimpleExoPlayer
     private lateinit var playerView:PlayerView
     private lateinit var imageView:AppCompatImageView
+    private lateinit var textView:AppCompatTextView
 
     private var imVisible = false
     private var isStartedAlready = false
@@ -72,6 +76,7 @@ class StoryViewFragment : Fragment(),ProgressListener {
         super.onViewCreated(view, savedInstanceState)
         playerView = thisFragment.findViewById(R.id.playerView)
         imageView = thisFragment.findViewById(R.id.imageView)
+        textView = thisFragment.findViewById(R.id.textView)
 
         //todo; implement controls
         thisFragment.findViewById<View>(R.id.manualControls).setOnTouchListener(controlsTouchListener)
@@ -125,9 +130,10 @@ class StoryViewFragment : Fragment(),ProgressListener {
     private fun playVideo(which: Int){
         playerView.show()
         imageView.hide()
+        textView.hide()
 
 
-        val mediaItem = MediaItem.fromUri(listOfVideos[which].url)
+        val mediaItem = MediaItem.fromUri(listOfContents[which].content)
 //        listOfVideos.forEach{
 //            if(it.url.checkMediaType() == MediaType.VIDEO){
 //                mediaSource.add(MediaItem.fromUri(it.url))
@@ -145,8 +151,9 @@ class StoryViewFragment : Fragment(),ProgressListener {
         novellaProgress.pause()
         playerView.hide()
         imageView.show()
+        textView.hide()
         Glide.with(imageView)
-             .load(listOfVideos[which].url)
+             .load(listOfContents[which].content)
                 .listener(object :RequestListener<Drawable>{
                     override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?, isFirstResource: Boolean): Boolean {
                         novellaProgress.next()
@@ -159,6 +166,15 @@ class StoryViewFragment : Fragment(),ProgressListener {
                     }
                 })
              .into(imageView)
+    }
+
+
+    private fun showText(which: Int){
+        playerView.hide()
+        imageView.hide()
+        textView.show()
+        textView.text = listOfContents[which].content
+        textView.setBackgroundColor(setRandomColor())
     }
 
     private fun pausePlayer(){
@@ -177,7 +193,7 @@ class StoryViewFragment : Fragment(),ProgressListener {
         novellaProgress = thisFragment.findViewById(R.id.novellaProgress)
 
         novellaProgress.setupProgressListener(this)
-        novellaProgress.setupView(listOfVideos.size)
+        novellaProgress.setupView(listOfContents.size)
 
 
         thisFragment.findViewById<AppCompatButton>(R.id.pauseButton).setOnClickListener{
@@ -208,22 +224,26 @@ class StoryViewFragment : Fragment(),ProgressListener {
     }
 
     override fun onNext(position:Int) {
-        if (MediaType.VIDEO == listOfVideos[position].url.checkMediaType()){
-            playVideo(position)
-        }else{
-            storyPlayer.pause()
-            showImage(position)
-        }
+        updateView(position)
     }
 
     override fun onPrevious(position: Int) {
-        if (MediaType.VIDEO == listOfVideos[position].url.checkMediaType()){
-            playVideo(position)
-        }else{
-            storyPlayer.pause()
-            showImage(position)
-        }
+        updateView(position)
+    }
 
+    private fun updateView(position: Int){
+        when(listOfContents[position].content.checkMediaType()){
+            MediaType.TEXT -> showText(position)
+            MediaType.VIDEO -> playVideo(position)
+            MediaType.IMAGE -> {
+                storyPlayer.pause()
+                showImage(position)
+            }
+            MediaType.UNKNOWN -> {
+                Toast.makeText(requireContext(),"Media type not supported",Toast.LENGTH_SHORT).show()
+                novellaProgress.next()
+            }
+        }
     }
 
     override fun onEnd() {
@@ -232,16 +252,16 @@ class StoryViewFragment : Fragment(),ProgressListener {
     }
 
     override fun onPauseOrResume(isPlaying: Boolean, position: Int) {
-        if(isPlaying && MediaType.VIDEO == listOfVideos[position].url.checkMediaType()){
+        if(isPlaying && MediaType.VIDEO == listOfContents[position].content.checkMediaType()){
                 storyPlayer.play()
-        }else if(!isPlaying && MediaType.VIDEO == listOfVideos[position].url.checkMediaType()){
+        }else if(!isPlaying && MediaType.VIDEO == listOfContents[position].content.checkMediaType()){
                 storyPlayer.pause()
         }
     }
 
     override fun onProgressStarts() {
 //        checkIsVideoOrImage(0)
-        if(MediaType.IMAGE == listOfVideos[0].url.checkMediaType()){
+        if(MediaType.IMAGE == listOfContents[0].content.checkMediaType()){
             showImage(0)
         }else{
             playVideo(0)
@@ -265,6 +285,11 @@ class StoryViewFragment : Fragment(),ProgressListener {
         super.onDestroy()
         releasePlayer()
         novellaProgress.destroy()
+    }
+
+
+    private fun setRandomColor():Int{
+        return Color.rgb((85..255).random(),(85..255).random(),(85..255).random())
     }
 
 }
